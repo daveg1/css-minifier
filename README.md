@@ -22,15 +22,15 @@ Some optimisations will be optional.
     - `margin: 0px` -> `margin: 0`
 1. Use shorthands (optional)
     - `{ margin-left: 10px; margin-bottom: 20px; }` -> `{ margin: 0 0 20px 10px }`
-    - `{ margin-inline-start: 10px; margin-block-end: 20px; }` -> `{ margin-inline: 10px 0; margin-block: 0 20px; }`
+    - `{ margin-inline-start: 10px; margin-block-end: 20px; }` -><br>`{ margin-inline: 10px 0; margin-block: 0 20px; }`
     - etc
-    
+
 ### Code output
 1. Remove comments
     - `/* ... */` is removed
 1. Remove whitespace
     - tabs, lines breaks, unneeded spaces
-1. Remove final semicolon in selector blocks
+1. Remove final semicolon in style blocks
     - `{ color: red; font-size: 1rem; }` -> `{ color: red; font-size: 1rem }`
 1. Group identical style blocks (optional)
     - `h1 { font-weight: bold } h2 { font-weight: bold }` -> `h1, h2 { font-weight: bold }`
