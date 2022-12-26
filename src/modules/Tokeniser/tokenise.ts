@@ -1,5 +1,6 @@
-import type { token } from './Token'
-import { TokenType } from './Token'
+import { debug } from '../utils/debug'
+import type { token } from './token'
+import { TokenType } from './token'
 
 // Spaces, tabs, new line chars
 function isWhiteSpace(char: string) {
@@ -29,10 +30,6 @@ export function tokenise(file: string): token[] {
 	let readingComment = false
 
 	chars.forEach((char, index) => {
-		if (char === ':') {
-			console.log(char)
-		}
-
 		// Skip whitespace
 		if (isWhiteSpace(char)) {
 			return
@@ -123,7 +120,7 @@ export function tokenise(file: string): token[] {
 			return
 		}
 
-		console.log('Missed:', char)
+		debug('Missed:', char)
 	})
 
 	return tokens
