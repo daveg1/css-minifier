@@ -1,6 +1,7 @@
 import { debug } from '../utils/debug';
 import type { token } from './token';
 import { TokenType } from './token';
+import { units } from './units';
 
 // Spaces, tabs, new line chars
 function isWhiteSpace(char: string) {
@@ -12,6 +13,11 @@ function isLetter(char: string) {
 	return code >= 65 && code <= 90;
 }
 
+function isDigit(char: string) {
+	const code = char.toUpperCase().charCodeAt(0);
+	return code >= 48 && code <= 57;
+}
+
 function isLetterOrDigit(char: string) {
 	const code = char.toUpperCase().charCodeAt(0);
 	return (code >= 65 && code <= 90) || (code >= 48 && code <= 57);
@@ -19,6 +25,20 @@ function isLetterOrDigit(char: string) {
 
 function isQuote(char: string) {
 	return char === '"' || char === "'";
+}
+
+function isHexDigit(char: string) {
+	const code = char.toUpperCase().charCodeAt(0);
+	// 0-9 | a-f
+	return (code >= 48 && code <= 57) || (code >= 65 && code <= 70);
+}
+
+function isUnit(spelling: string) {
+	return units.includes(spelling);
+}
+
+function isOperator(char: string) {
+	return ['+', '-', '/', '*'].includes(char);
 }
 
 function createToken(spelling: string, type: TokenType): token {
@@ -32,37 +52,34 @@ export function tokenise(file: string): token[] {
 	const tokens: token[] = [];
 	const chars = file.split('');
 	let currentSpelling = '';
-	let readingIdentifier = false;
-	let readingLiteral = false;
-	let readingComment = false;
 
 	for (let i = 0; i < chars.length; i++) {
-		let char = chars[i];
-		// const char = chars.at(i) // maybe safer?
+		// const char = chars.at(i) // ? maybe safer
 
 		// Skip whitespace
-		if (isWhiteSpace(char)) {
+		if (isWhiteSpace(chars[i])) {
 			continue;
 		}
 
-		// Skip comments
-		if (char === '/') {
-			let reading = true;
-
-			while (reading) {
-				// End of comment found
-				if (chars[++i] === '/') {
-					if (chars[i - 1] === '*') {
-						reading = false;
+		// Forward slash
+		if (chars[i] === '/') {
+			// Skip comments
+			if (chars[i + 1] === '*') {
+				while (true) {
+					// End of comment found
+					if (chars[++i] === '/') {
+						if (chars[i - 1] === '*') {
+							break;
+						}
 					}
 				}
+				currentSpelling = '';
+				continue;
 			}
-
-			continue;
 		}
 
 		// String literal
-		if (isQuote(char)) {
+		if (isQuote(chars[i])) {
 			currentSpelling += chars[i++]; // starting '
 
 			// Read characters until terminating quote reached
@@ -70,61 +87,127 @@ export function tokenise(file: string): token[] {
 				currentSpelling += chars[i++];
 			}
 
-			currentSpelling += char; // ending '
+			currentSpelling += chars[i++]; // ending '
 			tokens.push(createToken(currentSpelling, TokenType.StringLiteral));
+			currentSpelling = '';
+		}
+
+		// Hex literal
+		if (chars[i] === '#') {
+			currentSpelling += chars[i++];
+
+			while (isHexDigit(chars[i])) {
+				currentSpelling += chars[i++];
+			}
+
+			tokens.push(createToken(currentSpelling, TokenType.HexLiteral));
+			currentSpelling = '';
+		}
+
+		// Number literal
+		if (isDigit(chars[i])) {
+			currentSpelling += chars[i++];
+
+			while (isDigit(chars[i])) {
+				currentSpelling += chars[i++];
+			}
+
+			tokens.push(createToken(currentSpelling, TokenType.NumberLiteral));
+			currentSpelling = '';
+		}
+
+		if (isOperator(chars[i])) {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.Operator));
 			currentSpelling = '';
 			continue;
 		}
 
 		// Identifier
-		if (isLetter(char)) {
+		if (isLetter(chars[i])) {
 			currentSpelling += chars[i++];
 
-			while (isLetterOrDigit(chars[i])) {
+			while (isLetterOrDigit(chars[i]) || chars[i] === '-') {
 				currentSpelling += chars[i++];
 			}
 
-			tokens.push(createToken(currentSpelling, TokenType.Identifier));
-			currentSpelling = '';
-			char = chars[i];
-		}
-
-		// Read other characters
-		let token: token | null = null;
-
-		switch (char) {
-			case ':': {
-				currentSpelling += char;
-				token = createToken(currentSpelling, TokenType.Colon);
-				break;
-			}
-
-			case ';': {
-				currentSpelling += char;
-				token = createToken(currentSpelling, TokenType.Semicolon);
-				break;
-			}
-
-			case '{': {
-				currentSpelling += char;
-				token = createToken(currentSpelling, TokenType.OpenBrace);
-				break;
-			}
-
-			case '}': {
-				currentSpelling += char;
-				token = createToken(currentSpelling, TokenType.CloseBrace);
-				break;
+			if (isUnit(currentSpelling)) {
+				tokens.push(createToken(currentSpelling, TokenType.Unit));
+				currentSpelling = '';
+			} else {
+				tokens.push(createToken(currentSpelling, TokenType.Identifier));
+				currentSpelling = '';
 			}
 		}
 
-		if (token) {
-			tokens.push(token);
+		// Open Bracket
+		if (chars[i] === '(') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.OpenBracket));
 			currentSpelling = '';
 			continue;
 		}
 
-		debug('Missed:', char);
+		// Colon
+		if (chars[i] === ':') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.Colon));
+			currentSpelling = '';
+			continue;
+		}
+
+		// Semicolon
+		if (chars[i] === ';') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.Semicolon));
+			currentSpelling = '';
+			continue;
+		}
+
+		// Close Bracket
+		if (chars[i] === ')') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.CloseBrace));
+			currentSpelling = '';
+			continue;
+		}
+
+		// Comma
+		if (chars[i] === ',') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.Comma));
+			currentSpelling = '';
+			continue;
+		}
+
+		// Open brace
+		if (chars[i] === '{') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.OpenBrace));
+			currentSpelling = '';
+			continue;
+		}
+
+		// Close brace
+		if (chars[i] === '}') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.CloseBrace));
+			currentSpelling = '';
+			continue;
+		}
+
+		// Ignore trailing whitespace
+		if (isWhiteSpace(chars[i])) {
+			continue;
+		}
+
+		debug(
+			'Missed:',
+			chars[i],
+			'at',
+			i,
+			`..${chars[i - 1]}${chars[i]}${chars[i + 1]}..`
+		);
 	}
 
 	return tokens;

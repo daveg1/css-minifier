@@ -6,6 +6,10 @@
 
 line **/
 
-h1 {
-	color: 'red';
-}
+div:hover {color  : blue;
+	margin: calc(100px + 1 - 2 * 3 / 4);};
+
+h1, h2::after {/*
+	*/font-family: 'segoe ui', sans-serif;
+	font-size: 1rem;
+	background-color: #00FF00}

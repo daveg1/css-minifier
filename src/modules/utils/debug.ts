@@ -1,4 +1,4 @@
-const isDebugging = false;
+const isDebugging = true;
 
 export function debug(...message: any[]) {
 	if (isDebugging) {
