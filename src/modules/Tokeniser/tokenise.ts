@@ -17,9 +17,16 @@ function isLetterOrDigit(char: string) {
 	return (code >= 65 && code <= 90) || (code >= 48 && code <= 57)
 }
 
+function isQuote(char: string) {
+	return char === '"' || char === "'"
+}
+
 function createToken(spelling: string, type: TokenType): token {
 	return { spelling, type }
 }
+
+// TODO handle end of file
+// TODO handle errors (error tokens)
 
 export function tokenise(file: string): token[] {
 	const tokens: token[] = []
@@ -29,60 +36,57 @@ export function tokenise(file: string): token[] {
 	let readingLiteral = false
 	let readingComment = false
 
-	chars.forEach((char, index) => {
+	for (let i = 0; i < chars.length; i++) {
+		let char = chars[i]
+		// const char = chars.at(i) // maybe safer?
+
 		// Skip whitespace
 		if (isWhiteSpace(char)) {
-			return
+			continue
 		}
 
 		// Skip comments
 		if (char === '/') {
-			if (readingComment && chars[index - 1] === '*') {
-				readingComment = false
-			} else {
-				readingComment = true
+			let reading = true
+
+			while (reading) {
+				// End of comment found
+				if (chars[++i] === '/') {
+					if (chars[i - 1] === '*') {
+						reading = false
+					}
+				}
 			}
-			return
-		} else if (readingComment) {
-			return
+
+			continue
 		}
 
-		// Start reading string literal
-		if (char === "'" || char === '"') {
-			currentSpelling += char
+		// String literal
+		if (isQuote(char)) {
+			currentSpelling += chars[i++] // starting '
 
-			if (!readingLiteral) {
-				readingLiteral = true
-				return
+			// Read characters until terminating quote reached
+			while (!isQuote(chars[i])) {
+				currentSpelling += chars[i++]
 			}
 
-			readingLiteral = false
+			currentSpelling += char // ending '
 			tokens.push(createToken(currentSpelling, TokenType.StringLiteral))
 			currentSpelling = ''
-			return
-		} else if (readingLiteral) {
-			currentSpelling += char
-			return
+			continue
 		}
 
-		// Start reading identifier
-		if (isLetter(char) && !readingIdentifier) {
-			readingIdentifier = true
-			currentSpelling += char
-			return
-		}
+		// Identifier
+		if (isLetter(char)) {
+			currentSpelling += chars[i++]
 
-		// Continue reading identifier
-		else if (isLetterOrDigit(char) && readingIdentifier) {
-			currentSpelling += char
-			return
-		}
+			while (isLetterOrDigit(chars[i])) {
+				currentSpelling += chars[i++]
+			}
 
-		// Finish reading
-		else if (readingIdentifier) {
-			readingIdentifier = false
 			tokens.push(createToken(currentSpelling, TokenType.Identifier))
 			currentSpelling = ''
+			char = chars[i]
 		}
 
 		// Read other characters
@@ -117,11 +121,11 @@ export function tokenise(file: string): token[] {
 		if (token) {
 			tokens.push(token)
 			currentSpelling = ''
-			return
+			continue
 		}
 
 		debug('Missed:', char)
-	})
+	}
 
 	return tokens
 }
