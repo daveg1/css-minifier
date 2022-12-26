@@ -1,7 +1,7 @@
 export type token = {
-	spelling: string
-	type: TokenType
-}
+	spelling: string;
+	type: TokenType;
+};
 
 export const enum TokenType {
 	EndOfFile = 'EndOfFile',
