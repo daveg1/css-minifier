@@ -6,6 +6,8 @@ Some optimisations will be optional.
 ## Algorithm steps
 ### Interpret CSS
 1. Tokenise file
+	1. Mostly complete
+	1. TODO: @media, @import, @keframes, etc.
 1. Check syntax
 1. Create syntax tree
 
