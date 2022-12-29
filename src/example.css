@@ -6,10 +6,8 @@
 
 line **/
 
-div:hover {color  : blue;
-	margin: calc(100px + 1 - 2 * 3 / 4);};
-
-h1, h2::after {/*
+h1[attr$=asdfal]:hover, h2::after:nth-child(2n) {/*
 	*/font-family: 'segoe ui', sans-serif;
+	margin: calc(100px);
 	font-size: 1rem;
 	background-color: #00FF00}

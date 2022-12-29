@@ -3,6 +3,7 @@
 const FontRelativeUnits = ['em', 'ex', 'ch', 'rem'];
 const ViewPortUnits = ['vw', 'vh', 'vmin', 'vmax'];
 const AbsoluteUnits = ['cm', 'mm', 'q', 'in', 'pt', 'pc', 'px'];
+const NthChildUnits = ['n'];
 
 // https://www.w3.org/TR/css-values-3/#other-units
 
@@ -20,4 +21,5 @@ export const units = [
 	...DurationUnits,
 	...FrequencyUnits,
 	...ResolutionUnits,
+	...NthChildUnits,
 ];

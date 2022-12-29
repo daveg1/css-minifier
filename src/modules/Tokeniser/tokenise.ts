@@ -38,7 +38,11 @@ function isUnit(spelling: string) {
 }
 
 function isOperator(char: string) {
-	return ['+', '-', '/', '*'].includes(char);
+	return ['+', '-', '/', '*', '=', '~', '|', '^', '$'].includes(char);
+}
+
+function isSelectorOperator(char: string) {
+	return ['~', '|', '^', '$', '*'].includes(char);
 }
 
 function createToken(spelling: string, type: TokenType): token {
@@ -116,18 +120,15 @@ export function tokenise(file: string): token[] {
 			currentSpelling = '';
 		}
 
-		if (isOperator(chars[i])) {
-			currentSpelling += chars[i];
-			tokens.push(createToken(currentSpelling, TokenType.Operator));
-			currentSpelling = '';
-			continue;
-		}
-
 		// Identifier
 		if (isLetter(chars[i])) {
 			currentSpelling += chars[i++];
 
-			while (isLetterOrDigit(chars[i]) || chars[i] === '-') {
+			while (
+				isLetterOrDigit(chars[i]) ||
+				chars[i] === '-' ||
+				chars[i] === '_'
+			) {
 				currentSpelling += chars[i++];
 			}
 
@@ -140,10 +141,18 @@ export function tokenise(file: string): token[] {
 			}
 		}
 
-		// Open Bracket
-		if (chars[i] === '(') {
+		if (isOperator(chars[i])) {
 			currentSpelling += chars[i];
-			tokens.push(createToken(currentSpelling, TokenType.OpenBracket));
+
+			// Followed by =
+			if (chars[i + 1] === '=' && isSelectorOperator(chars[i])) {
+				currentSpelling += chars[++i];
+				tokens.push(createToken(currentSpelling, TokenType.SelectorOperator));
+				currentSpelling = '';
+				continue;
+			}
+
+			tokens.push(createToken(currentSpelling, TokenType.Operator));
 			currentSpelling = '';
 			continue;
 		}
@@ -163,19 +172,42 @@ export function tokenise(file: string): token[] {
 			currentSpelling = '';
 			continue;
 		}
-
-		// Close Bracket
-		if (chars[i] === ')') {
-			currentSpelling += chars[i];
-			tokens.push(createToken(currentSpelling, TokenType.CloseBrace));
-			currentSpelling = '';
-			continue;
-		}
-
 		// Comma
 		if (chars[i] === ',') {
 			currentSpelling += chars[i];
 			tokens.push(createToken(currentSpelling, TokenType.Comma));
+			currentSpelling = '';
+			continue;
+		}
+
+		// Open Square Bracket
+		if (chars[i] === '[') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.OpenSquareBracket));
+			currentSpelling = '';
+			continue;
+		}
+
+		// Close Square Bracket
+		if (chars[i] === ']') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.CloseSquareBracket));
+			currentSpelling = '';
+			continue;
+		}
+
+		// Open Bracket
+		if (chars[i] === '(') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.OpenBracket));
+			currentSpelling = '';
+			continue;
+		}
+
+		// Close Bracket
+		if (chars[i] === ')') {
+			currentSpelling += chars[i];
+			tokens.push(createToken(currentSpelling, TokenType.CloseBracket));
 			currentSpelling = '';
 			continue;
 		}
@@ -200,6 +232,11 @@ export function tokenise(file: string): token[] {
 		if (isWhiteSpace(chars[i])) {
 			continue;
 		}
+
+		// Note error
+		currentSpelling += chars[i];
+		tokens.push(createToken(currentSpelling, TokenType.Error));
+		currentSpelling = '';
 
 		debug(
 			'Missed:',

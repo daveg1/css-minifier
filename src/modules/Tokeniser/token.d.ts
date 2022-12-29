@@ -11,10 +11,17 @@ export const enum TokenType {
 	CloseBracket = 'CloseBracket',
 	OpenBrace = 'OpenBrace',
 	CloseBrace = 'CloseBrace',
+	OpenSquareBracket = 'OpenSquareBracket',
+	CloseSquareBracket = 'CloseSquareBracket',
 	Comma = 'Comma',
 	Colon = 'Colon',
-	Operator = 'Operator',
 	Semicolon = 'Semicolon',
+
+	// Operators
+	SelectorOperator = 'SelectorOperator',
+	Operator = 'Operator',
+	// TODO finish above
+
 	AtSymbol = 'AtSymbol',
 	Unit = 'Unit',
 	StringLiteral = 'StringLiteral',
